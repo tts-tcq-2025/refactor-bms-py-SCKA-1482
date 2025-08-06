@@ -2,7 +2,7 @@ import unittest
 from monitor import vitals_ok, validate_vitals
 
 def no_alert(_):
-    pass  # do nothing, disables blinking during tests
+    pass  
 
 class MonitorTest(unittest.TestCase):
     def test_vitals_ok_no_alert(self):
@@ -15,5 +15,6 @@ class MonitorTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
 
 
