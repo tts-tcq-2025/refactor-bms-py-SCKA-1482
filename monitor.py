@@ -24,7 +24,7 @@ def alert_blink(message, blink_count=6):
   print()
 
 def vitals_ok(temperature,pulseRate,spo2):
-  ok, mesaage = validate_vitals(temparature,pulseRate,spo2)
+  ok, message = validate_vitals(temperature,pulseRate,spo2)
   if not ok:
     alert_blink(message)
   return ok  
