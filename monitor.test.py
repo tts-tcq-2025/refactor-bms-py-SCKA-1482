@@ -1,5 +1,5 @@
 import unittest
-from vitals_monitor import vitals_ok
+from monitor import vitals_ok
 
 def mock_alert_handler(msg):
     # Simulate alert handling without sleep or print
@@ -30,3 +30,4 @@ class TestVitalsMonitor(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
