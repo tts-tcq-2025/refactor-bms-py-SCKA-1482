@@ -1,38 +1,25 @@
+from check_alerts import blink_alert
+from printer import default_printer
 
-from time import sleep
-import sys
+def is_out_of_range(val, min_val, max_val):
+    return val < min_val or val > max_val
 
+def handle_alert(vital, printer, blinker):
+    printer(
+        f"{vital['name']} out of range! "
+        f"Value: {vital['value']} (Expected: {vital['min']} to {vital['max']})"
+    )
+    blinker()
 
-from time import sleep
-import sys
+def alert_if_critical(vitals, printer=default_printer, blinker=blink_alert):
+    all_ok = True
+    for vital in vitals:
+        val, min_val, max_val = vital["value"], vital["min"], vital["max"]
+        if is_out_of_range(val, min_val, max_val):
+            handle_alert(vital, printer, blinker)
+            all_ok = False
+    return all_ok
 
-def validate_vitals(temperature, pulseRate, spo2):
-    checks = [
-        (lambda t, p, s: t > 102 or t < 95, 'Temperature critical!'),
-        (lambda t, p, s: p < 60 or p > 100, 'Pulse Rate is out of range!'),
-        (lambda t, p, s: s < 90, 'Oxygen Saturation out of range!'),
-    ]
-    
-    for check, message in checks:
-        if check(temperature, pulseRate, spo2):
-            return False, message
-    return True, 'All vitals normal.'
-
-def alert_blink(message, blink_count=6):
-    print(message)
-    for _ in range(blink_count):
-        print('\r* ', end='')
-        sys.stdout.flush()
-        sleep(1)
-        print('\r *', end='')
-        sys.stdout.flush()
-        sleep(1)
-    print()  
-
-def vitals_ok(temperature, pulseRate, spo2, alert_func=alert_blink):
-    ok, message = validate_vitals(temperature, pulseRate, spo2)
-    if not ok and alert_func:
-        alert_func(message)
-    return ok
-  
-  
+def vitals_ok(vitals, printer=default_printer, blinker=blink_alert):
+    return alert_if_critical(vitals, printer, blinker)	
+	
