@@ -1,72 +1,83 @@
-import unittest
-from monitor_earlywarning import vitals_ok, vitals_ok_with_warning
+import pytest
+from monitor_earlywarning import vitals_ok, check_vitals
 
-def mock_alert_handler(msg):
-    print(f"[MOCK ALERT] {msg}")
+alerts = []
+def mock_alert_handler(message):
+    alerts.append(message)
 
-class TestVitalsMonitorSimple(unittest.TestCase):
+def test_all_vitals_normal():
+    alerts.clear()
+    assert vitals_ok(36.5, 70, 97, alert_handler=mock_alert_handler)
+    assert alerts == []
 
-    def test_all_vitals_normal(self):
-        self.assertTrue(vitals_ok(98.6, 72, 98, mock_alert_handler))
+def test_temperature_low_alert():
+    alerts.clear()
+    temp = 34.5  # alert low
+    assert not vitals_ok(temp, 70, 97, alert_handler=mock_alert_handler)
+    assert any("temperature is at alert level" in msg for msg in alerts)
 
-    def test_temperature_low(self):
-        self.assertFalse(vitals_ok(94, 72, 98, mock_alert_handler))
+def test_temperature_low_warning():
+    alerts.clear()
+    temp = 35.9  # warning low
+    assert vitals_ok(temp, 70, 97, alert_handler=mock_alert_handler)
+    assert any("temperature is at warning level" in msg for msg in alerts)
 
-    def test_temperature_high(self):
-        self.assertFalse(vitals_ok(103, 72, 98, mock_alert_handler))
+def test_temperature_high_alert():
+    alerts.clear()
+    temp = 39.0  # alert high
+    assert not vitals_ok(temp, 70, 97, alert_handler=mock_alert_handler)
+    assert any("temperature is at alert level" in msg for msg in alerts)
 
-    def test_pulse_low(self):
-        self.assertFalse(vitals_ok(98.6, 55, 98, mock_alert_handler))
+def test_temperature_high_warning():
+    alerts.clear()
+    temp = 37.5  # warning high
+    assert vitals_ok(temp, 70, 97, alert_handler=mock_alert_handler)
+    assert any("temperature is at warning level" in msg for msg in alerts)
 
-    def test_pulse_high(self):
-        self.assertFalse(vitals_ok(98.6, 101, 98, mock_alert_handler))
+def test_pulse_low_alert():
+    alerts.clear()
+    pulse = 40  # alert low
+    assert not vitals_ok(36.5, pulse, 97, alert_handler=mock_alert_handler)
+    assert any("pulseRate is at alert level" in msg for msg in alerts)
 
-    def test_spo2_low(self):
-        self.assertFalse(vitals_ok(98.6, 72, 89, mock_alert_handler))
+def test_pulse_low_warning():
+    alerts.clear()
+    pulse = 55  # warning low
+    assert vitals_ok(36.5, pulse, 97, alert_handler=mock_alert_handler)
+    assert any("pulseRate is at warning level" in msg for msg in alerts)
 
-    def test_multiple_abnormal(self):
-        self.assertFalse(vitals_ok(104, 105, 85, mock_alert_handler))
+def test_pulse_high_alert():
+    alerts.clear()
+    pulse = 115  # alert high
+    assert not vitals_ok(36.5, pulse, 97, alert_handler=mock_alert_handler)
+    assert any("pulseRate is at alert level" in msg for msg in alerts)
 
+def test_pulse_high_warning():
+    alerts.clear()
+    pulse = 105  # warning high
+    assert vitals_ok(36.5, pulse, 97, alert_handler=mock_alert_handler)
+    assert any("pulseRate is at warning level" in msg for msg in alerts)
 
-class TestVitalsMonitorWithWarnings(unittest.TestCase):
+def test_spo2_low_alert():
+    alerts.clear()
+    spo2 = 89  # alert low
+    assert not vitals_ok(36.5, 70, spo2, alert_handler=mock_alert_handler)
+    assert any("spo2 is at alert level" in msg for msg in alerts)
 
-    def test_all_vitals_normal(self):
-        self.assertTrue(vitals_ok_with_warning(98.6, 72, 98, mock_alert_handler))
+def test_spo2_low_warning():
+    alerts.clear()
+    spo2 = 93  # warning low
+    assert vitals_ok(36.5, 70, spo2, alert_handler=mock_alert_handler)
+    assert any("spo2 is at warning level" in msg for msg in alerts)
 
-    def test_temperature_low_alert(self):
-        self.assertFalse(vitals_ok_with_warning(94, 72, 98, mock_alert_handler))
-
-    def test_temperature_low_warning(self):
-        # 95 is min, tolerance 1.5% of (102-95=7) = 0.105, so warning if temp in 95 - 95.105 (approx)
-        self.assertFalse(vitals_ok_with_warning(95.05, 72, 98, mock_alert_handler))
-
-    def test_temperature_high_alert(self):
-        self.assertFalse(vitals_ok_with_warning(103, 72, 98, mock_alert_handler))
-
-    def test_temperature_high_warning(self):
-        self.assertFalse(vitals_ok_with_warning(101.0, 72, 98, mock_alert_handler))
-
-    def test_pulse_low_alert(self):
-        self.assertFalse(vitals_ok_with_warning(98.6, 55, 98, mock_alert_handler))
-
-    def test_pulse_low_warning(self):
-        self.assertFalse(vitals_ok_with_warning(98.6, 60.5, 98, mock_alert_handler))
-
-    def test_pulse_high_alert(self):
-        self.assertFalse(vitals_ok_with_warning(98.6, 101, 98, mock_alert_handler))
-
-    def test_pulse_high_warning(self):
-        self.assertFalse(vitals_ok_with_warning(98.6, 99, 98, mock_alert_handler))
-
-    def test_spo2_low_alert(self):
-        self.assertFalse(vitals_ok_with_warning(98.6, 72, 89, mock_alert_handler))
-
-    def test_spo2_low_warning(self):
-        self.assertFalse(vitals_ok_with_warning(98.6, 72, 90.5, mock_alert_handler))
-
-    def test_multiple_abnormal(self):
-        self.assertFalse(vitals_ok_with_warning(104, 105, 85, mock_alert_handler))
-
-
-if __name__ == '__main__':
-    unittest.main()
+def test_multiple_abnormal():
+    alerts.clear()
+    temp = 34.0  # alert low temp
+    pulse = 110  # warning high pulse
+    spo2 = 93    # warning low spo2
+    result = vitals_ok(temp, pulse, spo2, alert_handler=mock_alert_handler)
+    # alert expected, so vitals_ok should be False because alert present
+    assert not result
+    assert any("temperature is at alert level" in msg for msg in alerts)
+    assert any("pulseRate is at warning level" in msg for msg in alerts)
+    assert any("spo2 is at warning level" in msg for msg in alerts)
